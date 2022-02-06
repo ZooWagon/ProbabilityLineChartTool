@@ -4,7 +4,7 @@ ProbabilityLineChartTool
 给定初始点数，增长阶段数，增长率符合的概率分布，
 绘制点数变化的折线图，并将点数变化情况生成csv文件。
 作者：ZooWagon
-时间：2022.2.6 15:10
+时间：2022.2.6 15:52
 '''
 
 import time
@@ -60,7 +60,7 @@ def simulate_index(pd_type, expectation, standard_deviation, start_index, phase_
 # 结果输出到文件
 def output_to_file(rate, index, init_para, time_str):
     filename = "PLCT" + time_str + ".csv"
-    fp = open(filename, "w", encoding='utf-8')
+    fp = open(filename, "w", encoding='utf-8-sig')
     fp.write("概率分布代号,期望(%),标准差(%),初始点数,模拟阶段数\n")
     for i in range(len(init_para)):
         fp.write(str(init_para[i]) + "{:}".format("," if i != len(init_para) - 1 else "\n"))
@@ -124,6 +124,7 @@ def main():
     out_picture_name = draw_index(index, time_str, para_pd)
     print("点数已绘制成折线图 " + out_picture_name)
     # 退出
+    input("按回车退出")
     print("退出")
 
 
