@@ -43,7 +43,11 @@ V0.1 2022.2.6
 
 ### 联系方式
 
-项目仓库：https://github.com/ZooWagon/ProbabilityLineChartTool
+项目仓库：
+
+https://github.com/ZooWagon/ProbabilityLineChartTool
+
+https://gitee.com/ZooWagon/ProbabilityLineChartTool
 
 作者：ZooWagon
 
