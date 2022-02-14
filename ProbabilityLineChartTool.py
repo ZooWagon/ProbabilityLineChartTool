@@ -29,13 +29,13 @@ def print_hi():
 
 # 读取概率分布参数
 def read_pd():
-    mode = eval(input("请输入概率分布（0-正态分布）："))
+    mode = eval(input("请输入概率分布代号（0-正态分布）："))
     ls = [mode]
     if mode == 0:
         e = eval(input("请输入期望（单位：%）："))
         s = eval(input("请输入标准差（单位：%）："))
         ls.append(e)
-        ls.append(s)
+        ls.append(abs(s))
     return ls
 
 
