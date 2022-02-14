@@ -4,9 +4,10 @@ ProbabilityLineChartTool
 给定初始点数，增长阶段数，增长率符合的概率分布，
 绘制点数变化的折线图，并将点数变化情况生成csv文件。
 作者：ZooWagon
-时间：2022.2.6 15:52
+时间：2022.2.14 18:36
 '''
 
+import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,6 +17,8 @@ import matplotlib.pyplot as plt
 support_pd = [0]
 PHASE_MIN = 10
 PHASE_MAX = 5000
+OUT_PATH = "./result/"
+OUT_FOLDER = "result"
 
 
 # 欢迎
@@ -24,7 +27,8 @@ def print_hi():
     print("概率折线图生成工具")
     print("欢迎")
     print("当前时间：" + time.strftime("%Y-%m-%d %H:%M:%S", t))
-    return t
+    if not os.path.exists(OUT_FOLDER):
+        os.makedirs(OUT_FOLDER)
 
 
 # 读取概率分布参数
@@ -60,7 +64,7 @@ def simulate_index(pd_type, expectation, standard_deviation, start_index, phase_
 # 结果输出到文件
 def output_to_file(rate, index, init_para, time_str):
     filename = "PLCT" + time_str + ".csv"
-    fp = open(filename, "w", encoding='utf-8-sig')
+    fp = open(OUT_PATH + filename, "w", encoding='utf-8-sig')
     fp.write("概率分布代号,期望(%),标准差(%),初始点数,模拟阶段数\n")
     for i in range(len(init_para)):
         fp.write(str(init_para[i]) + "{:}".format("," if i != len(init_para) - 1 else "\n"))
@@ -75,6 +79,7 @@ def output_to_file(rate, index, init_para, time_str):
 # 对点数作图
 def draw_index(index, time_str, para_pd):
     l = len(index)
+    plt.clf()
     pic_name = "PLCT" + time_str + ".png"
     text_s = ""
     if para_pd[0] == 0:
@@ -89,7 +94,7 @@ def draw_index(index, time_str, para_pd):
     plt.xlabel("天", size=14)
     plt.ylabel("点数", size=14)
     plt.axis("on")
-    plt.savefig(pic_name)
+    plt.savefig(OUT_PATH + pic_name)
     return pic_name
 
 
@@ -104,28 +109,41 @@ def err_handler(err_code):
     print("已退出")
 
 
+def get_timestamp():
+    t1 = time.time()
+    t_local = time.localtime(t1)
+    t_str = time.strftime("%Y%m%d%H%M%S", t_local)
+    mm = (t1 * 1000) % 1000
+    return "%s_%03d" % (t_str, mm)
+
+
 # 主函数
 def main():
-    t = print_hi()  # 欢迎
-    time_str = time.strftime("%Y%m%d%H%M%S", t)  # 时间戳
-    para_pd = read_pd()  # 读取概率分布参数
-    if para_pd[0] not in support_pd:
-        err_handler(0)  # 不支持的概率分布
-        return
-    para_ph = read_ph()  # 读取阶段参数
-    if para_ph[0] < 0 or para_ph[1] < PHASE_MIN or para_ph[1] > PHASE_MAX:
-        err_handler(1)
-        return
-    # 模拟点数
-    rate, index = simulate_index(para_pd[0], para_pd[1], para_pd[2], para_ph[0], para_ph[1])
-    # 输出到文件和绘图
-    out_file_name = output_to_file(rate, index, para_pd + para_ph, time_str)
-    print("结果已输出到文件 " + out_file_name)
-    out_picture_name = draw_index(index, time_str, para_pd)
-    print("点数已绘制成折线图 " + out_picture_name)
-    # 退出
-    input("按回车退出")
-    print("退出")
+    while True:
+        print_hi()  # 欢迎
+        time_str = get_timestamp()  # 时间戳
+        para_pd = read_pd()  # 读取概率分布参数
+        if para_pd[0] not in support_pd:
+            err_handler(0)  # 不支持的概率分布
+            return
+        para_ph = read_ph()  # 读取阶段参数
+        if para_ph[0] < 0 or para_ph[1] < PHASE_MIN or para_ph[1] > PHASE_MAX:
+            err_handler(1)
+            return
+        # 模拟点数
+        rate, index = simulate_index(para_pd[0], para_pd[1], para_pd[2], para_ph[0], para_ph[1])
+        # 输出到文件和绘图
+        out_file_name = output_to_file(rate, index, para_pd + para_ph, time_str)
+        print("结果已输出到文件 " + out_file_name)
+        out_picture_name = draw_index(index, time_str, para_pd)
+        print("点数已绘制成折线图 " + out_picture_name)
+        print("上述文件在result目录下")
+        # 退出
+        x = input("输入0退出工具；输入其他继续模拟：")
+        if x == '0':
+            print("退出")
+            break
+        print("%s" % ('-' * 20))
 
 
 main()
