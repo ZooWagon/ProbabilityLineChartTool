@@ -4,19 +4,21 @@ ProbabilityLineChartTool
 给定初始点数，增长阶段数，增长率符合的概率分布，
 绘制点数变化的折线图，并将点数变化情况生成csv文件。
 作者：ZooWagon
-时间：2022.2.14 18:36
+时间：2022.3.11 20:20
 '''
 
 import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
+from PIL import Image, ImageDraw, ImageFont
 
 # 支持的概率分布代码
 # 0-正态分布
 support_pd = [0]
 PHASE_MIN = 10
-PHASE_MAX = 5000
+PHASE_MAX = 50000
 OUT_PATH = "./result/"
 OUT_FOLDER = "result"
 
@@ -40,6 +42,7 @@ def read_pd():
         s = eval(input("请输入标准差（单位：%）："))
         ls.append(e)
         ls.append(abs(s))
+        # print(str(e), str(s))
     return ls
 
 
@@ -83,19 +86,41 @@ def draw_index(index, time_str, para_pd):
     pic_name = "PLCT" + time_str + ".png"
     text_s = ""
     if para_pd[0] == 0:
-        text_s = "增长率服从N({:.4f},{:.4f}^2)".format(round(para_pd[1], 4), round(para_pd[2], 4))
+        text_s = "增长率服从N({:s},{:s}^2)".format(str(para_pd[1]), str(para_pd[2]))
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
     plt.plot(list(range(l)), index, color='b')
     plt.xticks(np.array(range(0, l, (l // 10))))
-    plt.text((l // 10) // 3, index[0], text_s, size=14, color="black",
-             bbox=dict(facecolor="black", alpha=0.2))
+    # plt.text((l // 10) // 3, index[0], text_s, size=14, color="black",
+    #          bbox=dict(facecolor="black", alpha=0.2))
     plt.title("增长率在概率分布下的点数模拟", size=18)
     plt.xlabel("天", size=14)
     plt.ylabel("点数", size=14)
     plt.axis("on")
     plt.savefig(OUT_PATH + pic_name)
-    return pic_name
+    return pic_name, text_s
+
+
+# 增加概率分布说明的图表图片
+def add_figure_des(fig_name, des_text):
+    img = cv2.imread(OUT_PATH + fig_name)
+    white_img = np.ones([80, 640, 3]) * 255
+    img = np.vstack([img, white_img])
+    img = img.astype(np.uint8)
+    img = cv2ImgAddText(img, des_text, 200, 500)
+    out_name = fig_name.replace(".png", "_2.png")
+    cv2.imwrite(OUT_PATH + out_name, img)
+
+
+# 在img的(left,top)位置写汉字text
+def cv2ImgAddText(img, text, left, top, text_color=(0, 0, 0), text_size=20):
+    if (isinstance(img, np.ndarray)):  # 判断是否OpenCV图片类型
+        img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(img)
+    fontText = ImageFont.truetype(
+        "font/msyh.ttc", text_size, encoding="utf-8")
+    draw.text((left, top), text, text_color, font=fontText)
+    return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
 
 # 程序错误处理
@@ -106,9 +131,16 @@ def err_handler(err_code):
         print("请输入正确的概率分布代码。")
     elif err_code == 1:
         print("请输入正确的阶段参数。")
-    print("已退出")
+    print("请重新输入")
+    print_cutting_line()
 
 
+# 打印分割线
+def print_cutting_line():
+    print("%s" % ('-' * 20))
+
+
+# 获取时间戳
 def get_timestamp():
     t1 = time.time()
     t_local = time.localtime(t1)
@@ -125,25 +157,26 @@ def main():
         para_pd = read_pd()  # 读取概率分布参数
         if para_pd[0] not in support_pd:
             err_handler(0)  # 不支持的概率分布
-            return
+            continue
         para_ph = read_ph()  # 读取阶段参数
         if para_ph[0] < 0 or para_ph[1] < PHASE_MIN or para_ph[1] > PHASE_MAX:
             err_handler(1)
-            return
+            continue
         # 模拟点数
         rate, index = simulate_index(para_pd[0], para_pd[1], para_pd[2], para_ph[0], para_ph[1])
         # 输出到文件和绘图
         out_file_name = output_to_file(rate, index, para_pd + para_ph, time_str)
         print("结果已输出到文件 " + out_file_name)
-        out_picture_name = draw_index(index, time_str, para_pd)
-        print("点数已绘制成折线图 " + out_picture_name)
+        out_figure_name, des_text = draw_index(index, time_str, para_pd)
+        print("点数已绘制成折线图 " + out_figure_name)
+        add_figure_des(out_figure_name, des_text)
         print("上述文件在result目录下")
         # 退出
         x = input("输入0退出工具；输入其他继续模拟：")
         if x == '0':
             print("退出")
             break
-        print("%s" % ('-' * 20))
+        print_cutting_line()
 
 
 main()
